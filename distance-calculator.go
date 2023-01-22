@@ -25,27 +25,9 @@ type coordinate struct {
 }
 
 type apiResponse struct {
-	Code   string `json:"code"`
 	Routes []struct {
-		Geometry string `json:"geometry"`
-		Legs     []struct {
-			Steps    []interface{} `json:"steps"`
-			Summary  string        `json:"summary"`
-			Weight   float64       `json:"weight"`
-			Duration float64       `json:"duration"`
-			Distance float64       `json:"distance"`
-		} `json:"legs"`
-		WeightName string  `json:"weight_name"`
-		Weight     float64 `json:"weight"`
-		Duration   float64 `json:"duration"`
-		Distance   float64 `json:"distance"`
+		Distance float64 `json:"distance"`
 	} `json:"routes"`
-	Waypoints []struct {
-		Hint     string    `json:"hint"`
-		Distance float64   `json:"distance"`
-		Name     string    `json:"name"`
-		Location []float64 `json:"location"`
-	} `json:"waypoints"`
 }
 
 func main() {
@@ -73,7 +55,7 @@ func main() {
 	}
 
 	for idx, startLocation := range startLocations {
-		fmt.Printf("Processing starting location number %d...\n", idx+1)
+		fmt.Printf("Processing starting location number %d/%d...\n", idx+1, len(startLocations))
 		distances := getDistances(startLocation, endLocations)
 		writeResults(distances)
 	}
