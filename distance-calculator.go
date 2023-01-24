@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 )
 
 type distance struct {
@@ -119,6 +120,45 @@ func getDistances(startLocation coordinate, endLocations []coordinate) []distanc
 
 		distances = append(distances, distance)
 	}
+	return distances
+}
+
+func getDistancesNoChan(startLocation coordinate, endLocations []coordinate) []distance {
+	var distances []distance
+	var wg sync.WaitGroup
+
+	for idx, location := range endLocations {
+		wg.Add(1)
+		go func(idx int, location coordinate) {
+			defer wg.Done()
+			fmt.Printf("Getting distance of location %d/%d...\n", idx+1, len(endLocations))
+
+			url := fmt.Sprintf("http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f", startLocation.Longitude, startLocation.Latitude, location.Longitude, location.Latitude)
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Printf("resp : %s\n", body)
+				log.Fatalln(err)
+			}
+
+			var apiResponse apiResponse
+			err = json.Unmarshal(body, &apiResponse)
+			if err != nil {
+				fmt.Println(err)
+			}
+			var distance distance
+			distance.StartName = startLocation.Name
+			distance.EndName = location.Name
+			distance.Distance = apiResponse.Routes[0].Distance
+
+			distances = append(distances, distance)
+		}(idx, location)
+	}
+	wg.Wait()
 	return distances
 }
 
